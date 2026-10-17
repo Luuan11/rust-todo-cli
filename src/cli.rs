@@ -6,7 +6,7 @@ use crate::task::Priority;
 #[command(
     name = "todo",
     version,
-    about = "Gerenciador de tarefas simples no terminal"
+    about = "A simple task manager for your terminal"
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -15,38 +15,38 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
-    #[command(about = "Adiciona uma nova tarefa")]
+    #[command(about = "Add a new task")]
     Add {
-        #[arg(help = "Descrição da tarefa")]
+        #[arg(help = "Task description")]
         text: Vec<String>,
         #[arg(
             short,
             long,
             value_enum,
             default_value_t = Priority::Medium,
-            help = "Prioridade da tarefa"
+            help = "Task priority"
         )]
         priority: Priority,
     },
-    #[command(about = "Lista as tarefas (pendentes primeiro, por prioridade)")]
+    #[command(about = "List tasks (pending first, by priority)")]
     List {
-        #[arg(short, long, help = "Mostra só as pendentes")]
+        #[arg(short, long, help = "Show only pending tasks")]
         pending: bool,
     },
-    #[command(about = "Edita o texto e/ou a prioridade de uma tarefa")]
+    #[command(about = "Edit the text and/or the priority of a task")]
     Edit {
         id: u32,
-        #[arg(help = "Novo texto (opcional)")]
+        #[arg(help = "New text (optional)")]
         text: Vec<String>,
-        #[arg(short, long, value_enum, help = "Nova prioridade (opcional)")]
+        #[arg(short, long, value_enum, help = "New priority (optional)")]
         priority: Option<Priority>,
     },
-    #[command(about = "Marca uma tarefa como concluída")]
+    #[command(about = "Mark a task as done")]
     Done { id: u32 },
-    #[command(about = "Volta uma tarefa concluída para pendente")]
+    #[command(about = "Move a done task back to pending")]
     Undo { id: u32 },
-    #[command(about = "Remove uma tarefa")]
+    #[command(about = "Remove a task")]
     Remove { id: u32 },
-    #[command(about = "Remove todas as tarefas concluídas")]
+    #[command(about = "Remove all done tasks")]
     Clear,
 }
