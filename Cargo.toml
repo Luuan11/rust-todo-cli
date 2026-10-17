@@ -11,5 +11,15 @@ serde_json = "1"
 
 [dev-dependencies]
 assert_cmd = "2"
+criterion = "0.5"
 predicates = "3"
 tempfile = "3"
+
+[[bench]]
+name = "todo"
+harness = false
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
