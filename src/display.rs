@@ -9,6 +9,7 @@ const RED: &str = "\x1b[31m";
 const GREEN: &str = "\x1b[32m";
 const YELLOW: &str = "\x1b[33m";
 
+#[must_use]
 pub fn use_color() -> bool {
     std::io::stdout().is_terminal() && std::env::var_os("NO_COLOR").is_none()
 }
@@ -29,9 +30,10 @@ fn paint(text: &str, code: &str, color: bool) -> String {
     }
 }
 
+#[must_use]
 pub fn format_task(task: &Task, color: bool) -> String {
     let mark = if task.done { "x" } else { " " };
-    let priority = format!("{:<5}", task.priority.label());
+    let priority = format!("{:<6}", task.priority.label());
     if task.done {
         let line = format!("[{mark}] #{:<3} {priority} {}", task.id, task.text);
         return paint(&line, DIM, color);
@@ -61,7 +63,7 @@ mod tests {
     fn without_color_has_no_escape_codes() {
         let s = format_task(&task(false), false);
         assert!(!s.contains('\x1b'));
-        assert!(s.contains("#7") && s.contains("alta"));
+        assert!(s.contains("#7") && s.contains("high"));
     }
 
     #[test]

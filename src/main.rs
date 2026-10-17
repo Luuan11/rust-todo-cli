@@ -1,22 +1,18 @@
-mod cli;
-mod display;
-mod storage;
-mod task;
-
 use anyhow::{Result, anyhow, bail};
 use clap::Parser;
 
-use cli::{Cli, Command};
-use task::TodoList;
+use todo::cli::{Cli, Command};
+use todo::task::TodoList;
+use todo::{display, storage};
 
 fn not_found(id: u32) -> anyhow::Error {
-    anyhow!("tarefa #{id} não existe")
+    anyhow!("task #{id} does not exist")
 }
 
 fn print_list(list: &TodoList, pending_only: bool) {
     let tasks = list.sorted(pending_only);
     if tasks.is_empty() {
-        println!("Nenhuma tarefa por aqui.");
+        println!("No tasks here.");
         return;
     }
     let color = display::use_color();
@@ -24,7 +20,7 @@ fn print_list(list: &TodoList, pending_only: bool) {
         println!("{}", display::format_task(task, color));
     }
     let (pending, done) = list.counts();
-    println!("\n{pending} pendente(s), {done} concluída(s).");
+    println!("\n{pending} pending, {done} done.");
 }
 
 fn run(cli: Cli) -> Result<()> {
@@ -39,16 +35,16 @@ fn run(cli: Cli) -> Result<()> {
         Command::Add { text, priority } => {
             let text = text.join(" ");
             if text.trim().is_empty() {
-                bail!("a tarefa precisa de uma descrição");
+                bail!("the task needs a description");
             }
             let id = list.add(text, priority);
-            println!("Tarefa #{id} adicionada (prioridade {}).", priority.label());
+            println!("Task #{id} added ({} priority).", priority.label());
         }
         Command::Edit { id, text, priority } => {
             let text = text.join(" ");
             let has_text = !text.trim().is_empty();
             if !has_text && priority.is_none() {
-                bail!("informe um novo texto e/ou --priority");
+                bail!("provide a new text and/or --priority");
             }
             let task = list.find_mut(id).ok_or_else(|| not_found(id))?;
             if has_text {
@@ -57,23 +53,23 @@ fn run(cli: Cli) -> Result<()> {
             if let Some(priority) = priority {
                 task.priority = priority;
             }
-            println!("Tarefa #{id} editada.");
+            println!("Task #{id} updated.");
         }
         Command::Done { id } => {
             list.find_mut(id).ok_or_else(|| not_found(id))?.done = true;
-            println!("Tarefa #{id} concluída.");
+            println!("Task #{id} done.");
         }
         Command::Undo { id } => {
             list.find_mut(id).ok_or_else(|| not_found(id))?.done = false;
-            println!("Tarefa #{id} voltou para pendente.");
+            println!("Task #{id} moved back to pending.");
         }
         Command::Remove { id } => {
             let task = list.remove(id).ok_or_else(|| not_found(id))?;
-            println!("Tarefa #{id} removida: {}", task.text);
+            println!("Task #{id} removed: {}", task.text);
         }
         Command::Clear => {
             let removed = list.clear_done();
-            println!("{removed} tarefa(s) concluída(s) removida(s).");
+            println!("{removed} done task(s) removed.");
         }
     }
 
@@ -82,7 +78,7 @@ fn run(cli: Cli) -> Result<()> {
 
 fn main() {
     if let Err(e) = run(Cli::parse()) {
-        eprintln!("erro: {e:#}");
+        eprintln!("error: {e:#}");
         std::process::exit(1);
     }
 }

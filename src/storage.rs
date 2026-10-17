@@ -21,17 +21,17 @@ pub fn load(path: &Path) -> Result<TodoList> {
         Ok(content) => content,
         Err(e) if e.kind() == ErrorKind::NotFound => return Ok(TodoList::default()),
         Err(e) => {
-            return Err(e).with_context(|| format!("não consegui ler {}", path.display()));
+            return Err(e).with_context(|| format!("could not read {}", path.display()));
         }
     };
-    serde_json::from_str(&content).with_context(|| format!("arquivo {} corrompido", path.display()))
+    serde_json::from_str(&content).with_context(|| format!("{} is corrupted", path.display()))
 }
 
 pub fn save(path: &Path, list: &TodoList) -> Result<()> {
     let json = serde_json::to_string_pretty(list)?;
     let tmp = path.with_extension("json.tmp");
-    fs::write(&tmp, json).with_context(|| format!("não consegui salvar {}", tmp.display()))?;
-    fs::rename(&tmp, path).with_context(|| format!("não consegui salvar {}", path.display()))
+    fs::write(&tmp, json).with_context(|| format!("could not save {}", tmp.display()))?;
+    fs::rename(&tmp, path).with_context(|| format!("could not save {}", path.display()))
 }
 
 #[cfg(test)]
@@ -42,7 +42,7 @@ mod tests {
     #[test]
     fn missing_file_loads_empty_list() {
         let dir = tempfile::tempdir().unwrap();
-        let list = load(&dir.path().join("nao-existe.json")).unwrap();
+        let list = load(&dir.path().join("missing.json")).unwrap();
         assert_eq!(list.counts(), (0, 0));
     }
 
@@ -62,8 +62,8 @@ mod tests {
     fn corrupted_file_is_an_error() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("todo.json");
-        fs::write(&path, "isso não é json").unwrap();
+        fs::write(&path, "not json").unwrap();
         let err = load(&path).unwrap_err();
-        assert!(err.to_string().contains("corrompido"));
+        assert!(err.to_string().contains("is corrupted"));
     }
 }
