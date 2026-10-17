@@ -6,25 +6,27 @@ use serde::{Deserialize, Serialize};
 #[derive(
     Serialize, Deserialize, ValueEnum, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default,
 )]
+#[serde(rename_all = "lowercase")]
 pub enum Priority {
-    #[value(name = "baixa", alias = "low")]
-    #[serde(rename = "baixa")]
+    #[value(alias = "baixa")]
+    #[serde(alias = "baixa")]
     Low,
     #[default]
-    #[value(name = "media", alias = "medium")]
-    #[serde(rename = "media")]
+    #[value(alias = "media")]
+    #[serde(alias = "media")]
     Medium,
-    #[value(name = "alta", alias = "high")]
-    #[serde(rename = "alta")]
+    #[value(alias = "alta")]
+    #[serde(alias = "alta")]
     High,
 }
 
 impl Priority {
+    #[must_use]
     pub fn label(self) -> &'static str {
         match self {
-            Priority::Low => "baixa",
-            Priority::Medium => "média",
-            Priority::High => "alta",
+            Priority::Low => "low",
+            Priority::Medium => "medium",
+            Priority::High => "high",
         }
     }
 }
@@ -72,6 +74,7 @@ impl TodoList {
         before - self.tasks.len()
     }
 
+    #[must_use]
     pub fn sorted(&self, pending_only: bool) -> Vec<&Task> {
         let mut tasks: Vec<&Task> = self
             .tasks
@@ -82,6 +85,7 @@ impl TodoList {
         tasks
     }
 
+    #[must_use]
     pub fn counts(&self) -> (usize, usize) {
         let pending = self.tasks.iter().filter(|t| !t.done).count();
         (pending, self.tasks.len() - pending)
@@ -137,18 +141,26 @@ mod tests {
     #[test]
     fn json_roundtrip() {
         let mut list = TodoList::default();
-        list.add("comprar pão".into(), Priority::High);
+        list.add("buy bread".into(), Priority::High);
         let json = serde_json::to_string(&list).unwrap();
         let back: TodoList = serde_json::from_str(&json).unwrap();
         assert_eq!(back.next_id, 1);
-        assert_eq!(back.tasks[0].text, "comprar pão");
+        assert_eq!(back.tasks[0].text, "buy bread");
         assert_eq!(back.tasks[0].priority, Priority::High);
     }
 
     #[test]
-    fn priority_is_stored_in_portuguese() {
+    fn priority_is_stored_in_english() {
         let json = serde_json::to_string(&Priority::High).unwrap();
-        assert_eq!(json, r#""alta""#);
+        assert_eq!(json, r#""high""#);
+    }
+
+    #[test]
+    fn old_portuguese_priorities_still_load() {
+        let p: Priority = serde_json::from_str(r#""alta""#).unwrap();
+        assert_eq!(p, Priority::High);
+        let p: Priority = serde_json::from_str(r#""media""#).unwrap();
+        assert_eq!(p, Priority::Medium);
     }
 
     #[test]
@@ -161,10 +173,10 @@ mod tests {
     #[test]
     fn sorted_puts_pending_and_high_priority_first() {
         let mut list = TodoList::default();
-        list.add("baixa".into(), Priority::Low);
-        list.add("alta".into(), Priority::High);
-        list.add("media".into(), Priority::Medium);
-        list.add("alta feita".into(), Priority::High);
+        list.add("low".into(), Priority::Low);
+        list.add("high".into(), Priority::High);
+        list.add("medium".into(), Priority::Medium);
+        list.add("high done".into(), Priority::High);
         list.find_mut(4).unwrap().done = true;
         let ids: Vec<u32> = list.sorted(false).iter().map(|t| t.id).collect();
         assert_eq!(ids, vec![2, 3, 1, 4]);
